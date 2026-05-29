@@ -15,40 +15,28 @@ SKILL.md
 推荐用户提示词：
 
 ```text
-使用 tencent-novnc-chromium-cdp 技能，帮我部署 noVNC + Chromium 然后用CDP的方式远程控制Chromium浏览器。
-```
-
-## 部署前必须提醒用户
-
-开始前先告诉用户：
-
-```text
-开始部署 noVNC + Chromium + CDP 远程可视可控浏览器。
-
-服务器建议至少 2H4G。
-必须开放 6080/tcp。
-预计耗时通常 5-15 分钟，网络慢或首次安装依赖可能 20-30 分钟。
-顺利部署预计约 2万-5万 tokens；如遇报错、自动修复或多次重试，可能达到 5万-10万+ tokens。请确认剩余 Token 大于预计消耗，建议预留 10万 tokens 以上。
-部署过程中我会每 30 秒检查一次进度，每分钟汇报一次进度。
+使用 tencent-novnc-chromium-cdp 技能
 ```
 
 ## 关键要求
 
-- 需要 root 或免密 sudo 权限。
+- 需要 root 或免密 sudo 权限。权限不足时首选引导用户配置免密 sudo，备选请求 SSH 凭证。
 - `6080/tcp` 必须在云服务器安全组放行。
-- Chromium/Chrome 安装策略：deb 版优先；deb 安装失败后，自动切换至系统可用的其他 Chromium/Chrome 版本。
-- 启动后先打开 `https://www.baidu.com/`。
-- 完成后必须发送 noVNC 地址和浏览器截图。
-- 如果是 QQbot/QQ 通道，截图文件放到 `~/.openclaw/media/qqbot/`，并用 `<qqmedia>` 标签发送。
+- `9223/tcp`（CDP 调试端口）仅供 Agent 本机使用，不建议对公网开放。
+- Chromium/Chrome 安装策略：deb 版优先；deb 安装失败后，自动切换至系统可用的其他版本。
+- **严禁给 Chromium 添加 `--headless` 或 `--headless=new` 启动参数**，否则 noVNC 画面无法显示。
+- 启动后先打开 `https://www.baidu.com/` 确认浏览器正常。
+- 部署完成后必须按顺序执行三步收尾：打开百度 → 截图 → 发送回复。
+- noVNC 访问密码随机生成（8 位字母+数字混合），必须发给用户。
 
 ## 验证命令
 
 部署完成后至少验证：
 
 ```bash
-ss -tlnp | grep -E '6080|5900|9222'
+ss -tlnp | grep -E '6080|5900|9223'
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:6080/vnc.html
-curl -s http://127.0.0.1:9222/json/version
+curl -s http://127.0.0.1:9223/json/version
 ```
 
 预期：
@@ -59,25 +47,21 @@ curl -s http://127.0.0.1:9222/json/version
 
 ## 完成回复
 
-完成后回复用户：
+部署完成后按 SKILL.md 第八节模板回复用户，必须包含：noVNC 地址、访问密码、百度截图、开机自启状态。
 
-```text
-远程 Chromium 浏览器已启动：
+QQbot/QQ 通道截图发送：
 
-- noVNC 地址：http://<服务器IP>:6080/vnc.html
-- 浏览器状态：已自动打开百度页面，并已附上截图用于确认浏览器正常运行
-- 端口提醒：请确认云服务器安全组已放行 6080/tcp
-- 如果遇到登录、验证码、滑块，请在 noVNC 页面手动完成，完成后告诉我继续。
+```bash
+mkdir -p ~/.openclaw/media/qqbot
+cp /tmp/remote-browser.png ~/.openclaw/media/qqbot/remote-browser.png
 ```
-
-普通通道发送：
-
-```text
-MEDIA:/tmp/remote-browser.png
-```
-
-QQbot/QQ 通道发送：
 
 ```text
 <qqmedia>/root/.openclaw/media/qqbot/remote-browser.png</qqmedia>
+```
+
+其他通道：
+
+```text
+MEDIA:/tmp/remote-browser.png
 ```
